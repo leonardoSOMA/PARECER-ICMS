@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parecer ICMS — Produtos Médicos Importados</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: #fafaf8; color: #1a1a1a; min-height: 100vh; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Header */
+.header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 28px 32px 20px; }
+.header-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; opacity: 0.6; margin-bottom: 6px; }
+.header h1 { font-size: 22px; font-weight: 700; line-height: 1.3; }
+.header-sub { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 1px solid #e2e2e0; background: #fff; padding: 0 24px; overflow-x: auto; }
+.tab-btn { padding: 12px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-family: 'JetBrains Mono', monospace; color: #94a3b8; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn.active { font-weight: 700; color: #1e293b; border-bottom-color: #1e293b; }
+.tab-btn:hover { color: #475569; }
+
+/* Content */
+.content { padding: 24px; max-width: 900px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Cards */
+.card { background: #fff; border: 1px solid #e5e5e3; border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+.card-sm { padding: 16px; margin-bottom: 10px; }
+
+/* Stats Grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: #fff; border: 1px solid #e5e5e3; border-radius: 8px; padding: 16px 18px; }
+.stat-num { font-size: 28px; font-weight: 700; }
+.stat-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+/* Badges */
+.badge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; display: inline-block; }
+.badge-isento { background: #dcfce7; color: #166534; }
+.badge-risco-medio { background: #fef9c3; color: #854d0e; }
+.badge-risco-alto { background: #fee2e2; color: #991b1b; }
+.badge-tributado { background: #e0e7ff; color: #3730a3; }
+.badge-favoravel { background: #dcfce7; color: #166534; font-size: 10px; padding: 2px 8px; border-radius: 4px; }
+.badge-desfavoravel { background: #fee2e2; color: #991b1b; font-size: 10px; padding: 2px 8px; border-radius: 4px; }
+.badge-impacto-alto { background: #fecaca; color: #991b1b; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.badge-impacto-medio { background: #fde68a; color: #92400e; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+
+/* Alert boxes */
+.alert { border-radius: 6px; padding: 14px; margin-top: 12px; }
+.alert-warning { background: #fffbeb; border: 1px solid #fde68a; }
+.alert-warning .alert-title { font-size: 12px; font-weight: 700; color: #92400e; margin-bottom: 6px; }
+.alert-warning p { font-size: 13px; color: #78350f; line-height: 1.6; }
+.alert-info { background: #eff6ff; border: 1px solid #bfdbfe; }
+.alert-info .alert-title { font-size: 12px; font-weight: 700; color: #1e40af; margin-bottom: 6px; }
+.alert-info p { font-size: 13px; color: #1e3a5f; line-height: 1.6; }
+
+/* Product accordion */
+.product-item { background: #fff; border: 1px solid #e5e5e3; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+.product-header { padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; transition: background 0.15s; }
+.product-header:hover { background: #f8fafc; }
+.product-header.expanded { background: #f8fafc; }
+.product-name { font-size: 14px; font-weight: 600; }
+.product-meta { font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace; }
+.product-right { display: flex; gap: 8px; align-items: center; }
+.product-arrow { font-size: 16px; color: #94a3b8; transition: transform 0.2s; }
+.product-detail { padding: 0 18px 18px; border-top: 1px solid #f1f1ef; display: none; }
+.product-detail.show { display: block; }
+.detail-label { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; margin-top: 12px; }
+.detail-convenio { font-size: 13px; font-family: 'JetBrains Mono', monospace; padding: 8px 12px; border-radius: 4px; }
+.detail-convenio.ok { color: #166534; background: #f0fdf4; }
+.detail-convenio.nok { color: #dc2626; background: #fef2f2; }
+.detail-analise { font-size: 13px; line-height: 1.65; color: #374151; }
+
+/* NCM box */
+.ncm-row { padding: 14px; border-radius: 6px; border: 1px solid #e5e5e3; margin-bottom: 10px; }
+.ncm-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ncm-code { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+.ncm-desc { font-size: 12px; color: #64748b; margin-left: 8px; }
+.ncm-count { font-size: 11px; color: #94a3b8; margin-left: 8px; }
+.ncm-status { font-size: 12px; font-weight: 600; margin-top: 6px; }
+
+/* Jurisprudencia */
+.jur-card { background: #fff; border: 1px solid #e5e5e3; border-radius: 8px; padding: 16px; margin-bottom: 10px; }
+.jur-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.jur-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.jur-fonte { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 8px; }
+.jur-resumo { font-size: 13px; line-height: 1.6; color: #475569; }
+.jur-section-title { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+.jur-section-title.red { color: #991b1b; }
+.jur-section-title.green { color: #166534; margin-top: 20px; }
+
+/* Estrategias */
+.strat-card { background: #fff; border: 1px solid #e5e5e3; border-radius: 8px; padding: 20px; margin-bottom: 12px; display: flex; gap: 14px; align-items: flex-start; }
+.strat-num { background: #1e293b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.strat-body { flex: 1; }
+.strat-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.strat-desc { font-size: 13px; line-height: 1.65; color: #475569; margin-bottom: 10px; }
+.strat-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; }
+.strat-meta-label { font-weight: 600; color: #64748b; }
+.strat-meta-value { color: #374151; }
+.strat-rec { margin-top: 8px; font-size: 12px; font-weight: 700; color: #1e40af; background: #eff6ff; padding: 6px 10px; border-radius: 4px; display: inline-block; }
+
+/* Final recommendation box */
+.final-rec { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 20px; margin-top: 20px; }
+.final-rec h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+.final-rec p { font-size: 13px; line-height: 1.7; margin-top: 10px; }
+.final-rec strong.blue { color: #93c5fd; }
+
+/* Footer */
+.footer { text-align: center; padding: 20px 24px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e5e5e3; margin-top: 20px; }
+
+h2 { font-size: 16px; font-weight: 700; margin: 0 0 12px; color: #1e293b; }
+p { font-size: 14px; line-height: 1.7; }
+strong { font-weight: 700; }
+
+@media (max-width: 600px) {
+  .header { padding: 20px 16px 16px; }
+  .header h1 { font-size: 18px; }
+  .content { padding: 16px; }
+  .tabs { padding: 0 8px; }
+  .tab-btn { padding: 10px 12px; font-size: 12px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .strat-card { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-label">SOMA CONTABILIDADE — PARECER TRIBUTÁRIO</div>
+  <h1>Análise ICMS — Produtos Médicos Importados</h1>
+  <div class="header-sub">Item 95, Parte 1, Anexo X, RICMS/MG • Convênio ICMS 1/99 • Março 2026</div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('resumo', this)">Resumo Executivo</button>
+  <button class="tab-btn" onclick="switchTab('produtos', this)">Análise por Produto</button>
+  <button class="tab-btn" onclick="switchTab('jurisprudencia', this)">Jurisprudência</button>
+  <button class="tab-btn" onclick="switchTab('estrategia', this)">Estratégias</button>
+</div>
+
+<div class="content">
+
+  <!-- ===== RESUMO ===== -->
+  <div id="tab-resumo" class="tab-panel active">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" style="color:#475569">11</div>
+        <div class="stat-label">Total Produtos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#ca8a04">8</div>
+        <div class="stat-label">Risco Médio (isenção questionável)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#dc2626">2</div>
+        <div class="stat-label">Risco Alto (sem descrição no Conv.)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#4f46e5">3</div>
+        <div class="stat-label">Tributados 18% (correto)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>CONCLUSÃO PRINCIPAL</h2>
+      <p style="margin-bottom:12px">A pesquisa revelou um cenário <strong>desfavorável na esfera administrativa</strong> para manter a isenção de produtos cuja descrição não corresponde exatamente ao Convênio ICMS 1/99. As consultas de contribuintes em MG, SP e SC são unânimes: <strong>exige-se dupla correspondência — NCM + descrição exata</strong> (CTN art. 111, II).</p>
+      <p style="margin-bottom:12px">Contudo, na <strong>esfera judicial/contenciosa</strong>, identificamos precedentes relevantes que aplicam a <strong>interpretação teleológica</strong> sobre a literal, especialmente o caso dos stents de nitinol no TIT/SP e decisões do STJ e TJMG que reconhecem a necessidade de interpretar isenções de saúde pela sua finalidade.</p>
+
+      <div class="alert alert-warning">
+        <div class="alert-title">⚠ ALERTA — PRODUTOS COM RISCO</div>
+        <p><strong>SONDAS EXTRATORAS DE CÁLCULOS</strong> (2 itens) — NCM 9018.39.29 mas SEM qualquer descrição equivalente no Convênio. Risco ALTO de autuação se mantida isenção. Recomenda-se tributar a 18% ou buscar respaldo jurídico prévio.</p>
+      </div>
+
+      <div class="alert alert-info">
+        <div class="alert-title">ℹ TROCARTES — TRIBUTAÇÃO CORRETA</div>
+        <p>Os 3 trocartes (NCM 9018.90.99) estão corretamente tributados a 18%. A descrição "trocarte" NÃO consta no Convênio ICMS 1/99 sob esta NCM. Manter a tributação é a posição mais segura.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ANÁLISE POR NCM</h2>
+      <div class="ncm-row">
+        <div class="ncm-header">
+          <div>
+            <span class="ncm-code mono">9018.39.29</span>
+            <span class="ncm-desc">Sondas, cateteres e cânulas</span>
+            <span class="ncm-count">(8 itens)</span>
+          </div>
+        </div>
+        <div class="ncm-status" style="color:#ca8a04">Isenção aplicada — descrição aproximada, NÃO exata</div>
+      </div>
+      <div class="ncm-row">
+        <div class="ncm-header">
+          <div>
+            <span class="ncm-code mono">9018.90.99</span>
+            <span class="ncm-desc">Outros instrumentos p/ medicina</span>
+            <span class="ncm-count">(3 itens)</span>
+          </div>
+        </div>
+        <div class="ncm-status" style="color:#4f46e5">Tributação 18% — CORRETA (trocartes não listados)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PRODUTOS ===== -->
+  <div id="tab-produtos" class="tab-panel">
+    <p style="font-size:13px;color:#64748b;margin-bottom:16px">Clique em cada produto para ver a análise detalhada de enquadramento no Convênio ICMS 1/99.</p>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">CATETER DUPLO J</div><div class="product-meta">9018.39.29 • DJ-D4.8-L260 • 4.8FR x 26CM</div></div>
+        <div class="product-right"><span class="badge badge-risco-medio">RISCO MÉDIO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio ok">Cateter ureteral duplo "rabo de porco" (Item 18)</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Cateter duplo J é similar ao cateter ureteral duplo "pigtail/rabo de porco". A RC SP 9162/2016 reconheceu a isenção para "cateter uretral duplo pigtail" (NCM 9018.39.29). Contudo, a RC SP 31062/2024 NEGOU isenção para "Cateter Ureteral duplo J hidrofílico" reclassificado para NCM 9021.90.19. Se mantido na NCM 9018.39.29, há argumentos sólidos de equivalência funcional.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">CATETER DUPLO J</div><div class="product-meta">9018.39.29 • DJ-D06-L260 • 6.0FR x 26CM</div></div>
+        <div class="product-right"><span class="badge badge-risco-medio">RISCO MÉDIO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio ok">Cateter ureteral duplo "rabo de porco" (Item 18)</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Mesma situação do item anterior. A denominação "Duplo J" é comercial; funcionalmente, trata-se de cateter ureteral com dupla curvatura ("pigtail"). A equivalência funcional é o principal argumento.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">SONDA EXTRATORA DE CÁLCULOS</div><div class="product-meta">9018.39.29 • WL-4D19-L120 • 1.9F, 120CM, 4FIOS</div></div>
+        <div class="product-right"><span class="badge badge-risco-alto">RISCO ALTO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio nok">Não há descrição exata no Convênio</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Extratores de cálculos (baskets/dormia) NÃO possuem descrição correspondente no Anexo Único do Conv. ICMS 1/99. Embora classifiquem-se na NCM 9018.39.29, não se enquadram em nenhum dos itens 17 a 42. Alto risco de autuação na interpretação literal.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">SONDA EXTRATORA DE CÁLCULOS</div><div class="product-meta">9018.39.29 • WL-4D30-L90 • 3.0F, 90CM, 4FIOS</div></div>
+        <div class="product-right"><span class="badge badge-risco-alto">RISCO ALTO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio nok">Não há descrição exata no Convênio</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Mesma situação do item anterior. O produto é um "basket extractor" — instrumento de captura de cálculos renais. Não é cateter, cânula, introdutor ou dreno. Descrição incompatível com os itens listados.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">BAINHA URETERAL</div><div class="product-meta">9018.39.29 • SQ-D11-L350 • 11FR x 35CM</div></div>
+        <div class="product-right"><span class="badge badge-risco-medio">RISCO MÉDIO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio ok">Introdutor para cateter com e sem válvula (Item 35)</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">A bainha ureteral (access sheath) funciona como introdutor para passagem de instrumentos. Há correspondência funcional com o Item 35 "Introdutor para cateter com e sem válvula". Argumento defensável, mas a descrição não é idêntica.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">BAINHA URETERAL</div><div class="product-meta">9018.39.29 • SQ-D11-L450 • 11FR x 45CM</div></div>
+        <div class="product-right"><span class="badge badge-risco-medio">RISCO MÉDIO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio ok">Introdutor para cateter com e sem válvula (Item 35)</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Mesma análise do item anterior. Argumento defensável de equivalência funcional com o Item 35.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">TROCARTE 5MM</div><div class="product-meta">9018.90.99 • TG-AS05-100 • 5MM</div></div>
+        <div class="product-right"><span class="badge badge-tributado">TRIBUTADO 18%</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio nok">NÃO CONSTA no Convênio ICMS 1/99</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Trocartes NÃO constam na lista do Convênio ICMS 1/99 sob NCM 9018.90.99. Os itens listados são: bolsa para drenagem (52), linhas arteriais (53), conjunto de circulação assistida (54), balão intra-aórtico (55). Tributação a 18% está CORRETA na interpretação literal.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">TROCARTE 10MM</div><div class="product-meta">9018.90.99 • TG-AS10-100 • 10MM</div></div>
+        <div class="product-right"><span class="badge badge-tributado">TRIBUTADO 18%</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio nok">NÃO CONSTA no Convênio ICMS 1/99</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Mesma situação. Trocarte é instrumento cirúrgico essencial para laparoscopia, mas não está arrolado no Convênio ICMS 1/99.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">TROCARTE 12MM</div><div class="product-meta">9018.90.99 • TG-AS12-100 • 12MM</div></div>
+        <div class="product-right"><span class="badge badge-tributado">TRIBUTADO 18%</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio nok">NÃO CONSTA no Convênio ICMS 1/99</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Mesma situação dos demais trocartes. Sem margem para isenção na legislação vigente.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">FIO GUIA HIDROFÍLICO</div><div class="product-meta">9018.39.29 • DS-C-032 • 0.032" x 150CM</div></div>
+        <div class="product-right"><span class="badge badge-risco-medio">RISCO MÉDIO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio ok">Guia metálico p/ introdução de cateter (Item 20) / Guia de troca p/ angioplastia (Item 27)</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Fio guia hidrofílico é evolução tecnológica do guia metálico convencional. Os itens 20 e 27 preveem guias metálicos. Argumento forte de evolução tecnológica (precedente TIT/SP — stents de nitinol). Risco moderado.</div>
+      </div>
+    </div>
+
+    <div class="product-item">
+      <div class="product-header" onclick="toggleProduct(this)">
+        <div><div class="product-name">FIO GUIA HIDROFÍLICO</div><div class="product-meta">9018.39.29 • DS-C-035 • 0.035" x 150CM</div></div>
+        <div class="product-right"><span class="badge badge-risco-medio">RISCO MÉDIO</span><span class="product-arrow">▼</span></div>
+      </div>
+      <div class="product-detail">
+        <div class="detail-label">DESCRIÇÃO NO CONVÊNIO ICMS 1/99:</div>
+        <div class="detail-convenio ok">Guia metálico p/ introdução de cateter (Item 20) / Guia de troca p/ angioplastia (Item 27)</div>
+        <div class="detail-label">ANÁLISE TÉCNICA:</div>
+        <div class="detail-analise">Mesma situação do item anterior. Evolução tecnológica do guia metálico — revestimento hidrofílico melhora navegabilidade mas mantém idêntica função.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== JURISPRUDÊNCIA ===== -->
+  <div id="tab-jurisprudencia" class="tab-panel">
+    <p style="font-size:13px;color:#64748b;margin-bottom:16px">Consultas de contribuintes, decisões judiciais e doutrina levantadas sobre a matéria.</p>
+
+    <h3 class="jur-section-title red">POSIÇÕES DESFAVORÁVEIS (Interpretação Literal)</h3>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-desfavoravel">DESFAVORÁVEL</span><span class="badge badge-impacto-alto">IMPACTO ALTO</span></div>
+      <div class="jur-title">CTN Art. 111, II — Interpretação Literal</div>
+      <div class="jur-fonte mono">Código Tributário Nacional</div>
+      <div class="jur-resumo">A legislação tributária que disponha sobre isenção deve ser interpretada LITERALMENTE. Este é o principal obstáculo: os Fiscos estaduais exigem dupla correspondência (NCM + descrição exata).</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-desfavoravel">DESFAVORÁVEL</span><span class="badge badge-impacto-alto">IMPACTO ALTO</span></div>
+      <div class="jur-title">Consulta MG nº 116/2020 — Reagentes COVID-19</div>
+      <div class="jur-fonte mono">SEF/MG — Consulta de Contribuinte</div>
+      <div class="jur-resumo">MG negou isenção para reagentes COVID-19 (NCM 3822.00.90) mesmo com mesma NCM dos reagentes listados, por ter descrição diferente. Citou expressamente a regra de interpretação literal do CTN art. 111.</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-desfavoravel">DESFAVORÁVEL</span><span class="badge badge-impacto-alto">IMPACTO ALTO</span></div>
+      <div class="jur-title">RC SP nº 22983/2021 — Dupla Correspondência</div>
+      <div class="jur-fonte mono">SEFAZ/SP — Resposta à Consulta</div>
+      <div class="jur-resumo">SP confirmou que "para que a operação seja alcançada pelo benefício, é preciso que a descrição E o código da mercadoria junto à NCM estejam previstos no Anexo Único do Convênio ICMS-1/1999".</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-desfavoravel">DESFAVORÁVEL</span><span class="badge badge-impacto-alto">IMPACTO ALTO</span></div>
+      <div class="jur-title">RC SP nº 14699/2017 — Cateter PIC negado</div>
+      <div class="jur-fonte mono">SEFAZ/SP — Resposta à Consulta</div>
+      <div class="jur-resumo">SP negou isenção para "cateter medição PIC parenquimal" (NCM 9018.39.29) por não corresponder a nenhuma descrição no Convênio, embora compartilhasse a NCM com vários cateteres isentos.</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-desfavoravel">DESFAVORÁVEL</span><span class="badge badge-impacto-alto">IMPACTO ALTO</span></div>
+      <div class="jur-title">RC SP nº 31062/2024 — Cateter Duplo J Hidrofílico</div>
+      <div class="jur-fonte mono">SEFAZ/SP — Resposta à Consulta</div>
+      <div class="jur-resumo">SP negou isenção para "Cateter Ureteral duplo J hidrofílico" reclassificado para NCM 9021.90.19, por não corresponder às descrições dos itens 170-173 sob essa NCM. Reforça a regra de descrição exata.</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-desfavoravel">DESFAVORÁVEL</span><span class="badge badge-impacto-medio">IMPACTO MÉDIO</span></div>
+      <div class="jur-title">Consulta SC nº 062/2017 — Prótese Silicone Mamária</div>
+      <div class="jur-fonte mono">SEF/SC — COPAT</div>
+      <div class="jur-resumo">SC negou isenção para prótese de silicone mamária implantável (NCM 9021.39.80) por ausência de citação expressa na lista, mesmo tendo mesma NCM de outros itens isentos. Interpretação restritiva.</div>
+    </div>
+
+    <h3 class="jur-section-title green">POSIÇÕES FAVORÁVEIS (Interpretação Teleológica)</h3>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-favoravel">FAVORÁVEL</span><span class="badge badge-impacto-alto">IMPACTO ALTO</span></div>
+      <div class="jur-title">TIT/SP — AIIM 4.090.891-4 — Stents de Nitinol</div>
+      <div class="jur-fonte mono">Tribunal de Impostos e Taxas de São Paulo</div>
+      <div class="jur-resumo">TIT/SP reconheceu isenção para stents de nitinol (liga de alumínio e titânio) quando a norma previa apenas stents de "aço inoxidável e cromo cobalto". Aplicou interpretação TELEOLÓGICA: mesma função médica, evolução tecnológica do material.</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-favoravel">FAVORÁVEL</span><span class="badge badge-impacto-medio">IMPACTO MÉDIO</span></div>
+      <div class="jur-title">STJ — REsp 1.196.500/MT — Cegueira Monocular</div>
+      <div class="jur-fonte mono">Superior Tribunal de Justiça</div>
+      <div class="jur-resumo">O STJ privilegiou a interpretação teleológica sobre a literal em matéria de isenção. Reconheceu que a finalidade da norma isentiva é o que deve prevalecer quando a literalidade leva a resultado absurdo.</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-favoravel">FAVORÁVEL</span><span class="badge badge-impacto-medio">IMPACTO MÉDIO</span></div>
+      <div class="jur-title">TJMG — Interpretação Teleológica + Sistemática</div>
+      <div class="jur-fonte mono">Tribunal de Justiça de Minas Gerais</div>
+      <div class="jur-resumo">O TJMG reconheceu que "a interpretação literal isolada pode levar a verdadeiros absurdos" e que o aplicador "pode e deve utilizar todos os elementos de interpretação, especialmente o teleológico" (citando Hugo de Brito Machado).</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-favoravel">FAVORÁVEL</span><span class="badge badge-impacto-medio">IMPACTO MÉDIO</span></div>
+      <div class="jur-title">Consulta SC nº 065/2025 — Destinação Final</div>
+      <div class="jur-fonte mono">SEF/SC — COPAT</div>
+      <div class="jur-resumo">SC confirmou que NCMs 9018.90.99 e 9018.39.29 fazem jus à isenção para produtos arrolados, e que a isenção vale em toda a cadeia (não apenas venda a consumidor final). Útil para vendas a distribuidores.</div>
+    </div>
+
+    <div class="jur-card">
+      <div class="jur-badges"><span class="badge badge-favoravel">FAVORÁVEL</span><span class="badge badge-impacto-medio">IMPACTO MÉDIO</span></div>
+      <div class="jur-title">Doutrina: Evolução Tecnológica e Norma Isentiva</div>
+      <div class="jur-fonte mono">Migalhas — Art. Doutrinário (Jun/2025)</div>
+      <div class="jur-resumo">Artigo doutrinário defende que interpretar isenção de forma a excluir tecnologias mais avançadas que cumprem mesma função, apenas por não constarem expressamente do texto, frustra o objetivo da desoneração de saúde.</div>
+    </div>
+  </div>
+
+  <!-- ===== ESTRATÉGIAS ===== -->
+  <div id="tab-estrategia" class="tab-panel">
+    <p style="font-size:13px;color:#64748b;margin-bottom:16px">Caminhos recomendados em ordem de prioridade para o cliente.</p>
+
+    <div class="strat-card">
+      <div class="strat-num">1</div>
+      <div class="strat-body">
+        <div class="strat-title">Consulta Formal à SEF/MG (via e-CAC)</div>
+        <div class="strat-desc">Protocolar consulta de contribuinte junto à SEF/MG questionando especificamente se os produtos com NCM 9018.39.29 (cateteres duplo J, bainhas ureterais, fios guia hidrofílicos) e NCM 9018.90.99 (trocartes) se enquadram na isenção do Item 95/Parte 1/Anexo X do RICMS/MG, argumentando equivalência funcional com os itens listados no Convênio ICMS 1/99.</div>
+        <div class="strat-meta">
+          <div><span class="strat-meta-label">Risco:</span> <span class="strat-meta-value">Baixo — apenas esclarece a posição fiscal</span></div>
+          <div><span class="strat-meta-label">Prazo:</span> <span class="strat-meta-value">60 a 120 dias para resposta</span></div>
+        </div>
+        <div class="strat-rec">RECOMENDADA COMO PRIMEIRO PASSO</div>
+      </div>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-num">2</div>
+      <div class="strat-body">
+        <div class="strat-title">Mandado de Segurança Preventivo</div>
+        <div class="strat-desc">Impetrar MS preventivo para assegurar o direito de aplicar a isenção com base na interpretação teleológica do Convênio ICMS 1/99, argumentando que os produtos são insumos cirúrgicos essenciais com mesma finalidade dos listados.</div>
+        <div class="strat-meta">
+          <div><span class="strat-meta-label">Risco:</span> <span class="strat-meta-value">Médio — jurisprudência ainda não consolidada em MG para esta tese</span></div>
+          <div><span class="strat-meta-label">Prazo:</span> <span class="strat-meta-value">Liminar em 30-60 dias, mérito em 6-12 meses</span></div>
+        </div>
+        <div class="strat-rec">VIÁVEL PARA NCM 9018.39.29 — ARRISCADA PARA TROCARTES</div>
+      </div>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-num">3</div>
+      <div class="strat-body">
+        <div class="strat-title">Tributar Corretamente + Recuperação Futura</div>
+        <div class="strat-desc">Tributar a 18% todos os produtos cuja descrição não bate exatamente com o Convênio, evitando risco de autuação. Monitorar evolução legislativa (possível inclusão futura de novos itens no Convênio ou adequação com a Reforma Tributária).</div>
+        <div class="strat-meta">
+          <div><span class="strat-meta-label">Risco:</span> <span class="strat-meta-value">Zero — posição mais conservadora</span></div>
+          <div><span class="strat-meta-label">Prazo:</span> <span class="strat-meta-value">Imediato</span></div>
+        </div>
+        <div class="strat-rec">MAIS SEGURA PARA TROCARTES (NCM 9018.90.99)</div>
+      </div>
+    </div>
+
+    <div class="strat-card">
+      <div class="strat-num">4</div>
+      <div class="strat-body">
+        <div class="strat-title">Pleito ao CONFAZ para Inclusão de Novos Itens</div>
+        <div class="strat-desc">Via entidade de classe (ABIMO, ABIIS ou similar), pleitear ao CONFAZ a alteração do Anexo Único do Convênio ICMS 1/99 para incluir trocartes, extratores de cálculos e demais insumos cirúrgicos modernos não previstos em 1999.</div>
+        <div class="strat-meta">
+          <div><span class="strat-meta-label">Risco:</span> <span class="strat-meta-value">Nenhum risco fiscal — processo político/institucional</span></div>
+          <div><span class="strat-meta-label">Prazo:</span> <span class="strat-meta-value">12 a 24 meses</span></div>
+        </div>
+        <div class="strat-rec">ESTRATÉGIA COMPLEMENTAR DE MÉDIO PRAZO</div>
+      </div>
+    </div>
+
+    <div class="final-rec">
+      <h3>RECOMENDAÇÃO FINAL — ABORDAGEM SEGMENTADA</h3>
+      <p><strong class="blue">NCM 9018.39.29 (Cateteres Duplo J, Bainhas, Fios Guia):</strong> Manter a isenção com documentação robusta de equivalência funcional, mas protocolar consulta formal à SEF/MG para blindagem. Se resposta negativa, avaliar via judicial com base no precedente TIT/SP (stents de nitinol).</p>
+      <p><strong class="blue">NCM 9018.39.29 (Sondas Extratoras de Cálculos):</strong> REVISAR URGENTE a aplicação de isenção. Não há descrição correspondente no Convênio. Tributar a 18% ou obter parecer jurídico antes de manter isenção.</p>
+      <p><strong class="blue">NCM 9018.90.99 (Trocartes):</strong> MANTER tributação a 18%. Posição correta e sem risco. Trocarte definitivamente não consta no Convênio ICMS 1/99.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  Parecer elaborado com base em pesquisa legislativa e jurisprudencial • Não substitui parecer jurídico formal • Soma Contabilidade • Março/2026
+</div>
+
+<script>
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleProduct(header) {
+  const detail = header.nextElementSibling;
+  const arrow = header.querySelector('.product-arrow');
+  const isOpen = detail.classList.contains('show');
+
+  // Close all
+  document.querySelectorAll('.product-detail').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.product-header').forEach(h => {
+    h.classList.remove('expanded');
+    h.querySelector('.product-arrow').textContent = '▼';
+  });
+
+  // Toggle clicked
+  if (!isOpen) {
+    detail.classList.add('show');
+    header.classList.add('expanded');
+    arrow.textContent = '▲';
+  }
+}
+</script>
+
+</body>
+</html>
